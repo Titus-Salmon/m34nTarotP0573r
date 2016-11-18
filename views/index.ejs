@@ -1,0 +1,247 @@
+<html>
+<head>
+  <title>m34np0573r</title>
+  <!-- <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet"> -->
+
+  <link rel="stylesheet" href="jquery-ui-custom.css" type="text/css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css" type="text/css" />
+
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.10/angular.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.10/angular-ui-router.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js" type="text/javascript"></script>
+  <script src="/javascripts/angularApp.js"></script>
+  <script src="/javascripts/tarotreader5.js"></script>
+
+
+
+  <style> .glyphicon-thumbs-up { cursor:pointer } </style>
+</head>
+<!-- <body ng-app="m34nPosts" ng-controller="MainCtrl"> -->
+  <body ng-app="m34nPosts">
+
+    <h1>Tarot Card Reader</h1>
+
+		<h2>1. Set deck parameters</h2>
+		<div>
+			cards to include in deck：
+			<select id="mode" class='ui-state-default'>
+			<option value="all" selected="true">all</option>
+			<option value="major">major</option>
+			<option value="minor">minor</option>
+			</select>
+			enable card reversal：
+			<select id="canReverse" class='ui-state-default'>
+			<option value="true" selected="true">yes</option>
+			<option value="false">no</option>
+			</select>
+			</div>
+			<h2>2. Shuffle deck by clicking 'shuffle' button.</h2>
+			<div>
+			<input type="button" id="shuffle" value="shuffle" class='ui-state-default' />
+			<div id="deck"></div>
+		</div>
+
+		<h2>3. Click 'add card' (below) to add one 'placeholder'. Once the number of placeholders for your type of spread is reached, choose the same number of cards from deck above by hovering and clicking on highlighted card. </h2>
+
+
+		<h2>4. Click 'turn cards' (below) to reveal your Tarot reading. Click 'redraw cards' to reshuffle deck and perform the same type of spread. Click 'reset spread area' to reshuffle and clear the number of placeholders. </h2>
+
+		<div>
+			<input type="button" id="addCard" value="add card" class='ui-state-default' />
+			<input type="button" id="turnCards" value="turn cards" class='ui-state-default' />
+			<input type="button" id="redrawCards" value="redraw cards" class='ui-state-default' />
+			<input type="button" id="resetSpreadArea" value="reset spread area" class='ui-state-default' />
+			<div id="spreadArea"></div>
+		</div>
+
+
+
+		<div id="dialogTurnCardsResult" title="Your Tarot reading"></div>
+		<div id="dialogRedrawCards" title="redraw cards"></div>
+		<div id="dialogResetSpreadArea" title="reset spread area"></div>
+		</div>
+		<!-- prototype for draggable -->
+		<div id="cardProto" class="draggable ui-widget-backofcards"></div>
+
+		<!-- prototype for droppable -->
+		<div id="cardPosition" class="droppable ui-widget-header" title="card position"></div>
+
+            <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+
+  <nav class="navbar navbar-default pull-right" ng-controller="NavCtrl">
+    <ul class="nav navbar-nav">
+      <li ng-show="isLoggedIn()"><a>{{ currentUser() }}</a></li>
+      <li ng-show="isLoggedIn()"><a href="" ng-click="logOut()">Log Out</a></li>
+      <li ng-hide="isLoggedIn()"><a href="/#/login">Log In</a></li>
+      <li ng-hide="isLoggedIn()"><a href="/#/register">Register</a></li>
+    </ul>
+  </nav>
+  <div class="row">
+    <div class="col-md-6 col-md-offset-3">
+      <ui-view></ui-view>
+    </div>
+</div>
+
+  <script type="text/ng-template" id="/home.html">
+    <div class="page-header">
+      <h1>m34n p0573r</h1>
+
+      <span ng-show="post.author">
+        posted by <a>{{post.author}}</a>
+      </span>
+
+    </div>
+
+    <div ng-repeat="post in posts | orderBy:'-upvotes'">
+      <span class="glyphicon glyphicon-thumbs-up"
+        ng-click="incrementUpvotes(post)"></span>
+      {{post.upvotes}}
+      <span style="font-size:20px; margin-left:10px;">
+        <a ng-show="post.link" href="{{post.link}}">
+          {{post.title}}
+        </a>
+        <span ng-hide="post.link">
+          {{post.title}}
+        </span>
+      </span>
+
+      <span>
+        <a href="#/posts/{{post._id}}">Comments</a>
+      </span>
+
+
+    </div>
+
+    <form ng-submit="addPost()"
+      ng-show="isLoggedIn()"
+      style="margin-top:30px;">
+      <h3>Add a new post</h3>
+
+      <div class="form-group">
+        <input type="text"
+          class="form-control"
+          placeholder="Title"
+          ng-model="title"></input>
+      </div>
+      <div class="form-group">
+        <input type="text"
+        class="form-control"
+        placeholder="Link"
+        ng-model="link"></input>
+      </div>
+      <button type="submit" class="btn btn-primary">Post</button>
+
+    </form>
+
+    <div ng-hide="isLoggedIn()">
+      <br><br>
+      <p class="text-center">You need to <a href="/#/login">Log In</a> or <a href="/#/register">Register</a> before you can add, vote, or comment on a post.</p>
+    </div>
+
+  </script>
+
+  <script type="text/ng-template" id="/posts.html">
+    <div class="page-header">
+      <h3>
+      <a ng-show="post.link" href="{{post.link}}">
+      {{post.title}}
+      </a>
+      <span ng-hide="post.link">
+      {{post.title}}
+      </span>
+      </h3>
+    </div>
+
+    <div ng-repeat="comment in post.comments | orderBy:'-upvotes'">
+      <span class="glyphicon glyphicon-thumbs-up"
+      ng-click="incrementUpvotes(comment)"></span>
+      {{comment.upvotes}} - by {{comment.author}}
+      <span style="font-size:20px; margin-left:10px;">
+      {{comment.body}}
+      </span>
+    </div>
+
+    <form ng-submit="addComment()"
+    ng-show="isLoggedIn()"
+       style="margin-top:30px;">
+       <h3>Add a new comment</h3>
+
+       <div class="form-group">
+         <input type="text"
+         class="form-control"
+         placeholder="Comment"
+         ng-model="body"></input>
+       </div>
+       <button type="submit" class="btn btn-primary">Post</button>
+     </form>
+
+     <div ng-hide="isLoggedIn()">
+
+       <p class="text-center">You need to <a href="/#/login">Log In</a> or <a href="/#/register">Register</a> before you can add, vote, or comment on a post.</p>
+     </div>
+
+  </script>
+
+  <script type="text/ng-template" id="/register.html">
+  <div class="page-header">
+    <h1>m34n p0573r</h1>
+  </div>
+
+  <div ng-show="error" class="alert alert-danger row">
+    <span>{{ error.message }}</span>
+  </div>
+
+  <form ng-submit="register()"
+    style="margin-top:30px;">
+    <h3>Register</h3>
+
+    <div class="form-group">
+      <input type="text"
+      class="form-control"
+      placeholder="Username"
+      ng-model="user.username"></input>
+    </div>
+    <div class="form-group">
+      <input type="password"
+      class="form-control"
+      placeholder="Password"
+      ng-model="user.password"></input>
+    </div>
+    <button type="submit" class="btn btn-primary">Register</button>
+  </form>
+</script>
+
+<script type="text/ng-template" id="/login.html">
+  <div class="page-header">
+    <h1>m34n p0573r</h1>
+  </div>
+
+  <div ng-show="error" class="alert alert-danger row">
+    <span>{{ error.message }}</span>
+  </div>
+
+  <form ng-submit="logIn()"
+    style="margin-top:30px;">
+    <h3>Log In</h3>
+
+    <div class="form-group">
+      <input type="text"
+      class="form-control"
+      placeholder="Username"
+      ng-model="user.username"></input>
+    </div>
+    <div class="form-group">
+      <input type="password"
+      class="form-control"
+      placeholder="Password"
+      ng-model="user.password"></input>
+    </div>
+    <button type="submit" class="btn btn-primary">Log In</button>
+  </form>
+  </script>
+
+</body>
+</html>
